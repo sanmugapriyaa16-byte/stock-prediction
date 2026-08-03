@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title> Stock System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
+    <style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    margin: 0;
+}
+
+.card {
+    background: #1e293b;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+    margin-bottom: 25px;
+    transition: transform 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+</style>
+</head>
+
+<body>
+
+<div style="max-width:900px; margin:auto; padding:30px;"></div>
+
+<h1 style="text-align:center;">📊 Stock Investment System</h1>
+
+<!-- INPUT CARD -->
+<div class="card"> </div>
+    <form action="/predict" method="post">
+        <input type="text" name="prices"
+       placeholder="Enter prices (e.g. 100,102,105)"
+       style="padding:12px; width:60%; max-width:400px; display:block; margin: 0 auto; border-radius:8px; border:1px solid #334155;">
+        <br><br>
+        <button type="submit"
+                style="display:block; margin:15px auto; padding:10px 20px; background:#3b82f6; color:white; border:none; border-radius:6px;">
+            Analyze
+        </button>
+    </form>
+</div>
+
+<br>
+
+{% if prediction %}
+
+<!-- RESULT CARD -->
+<div class="card">
+
+<h2>📈 Analysis Report</h2>
+
+<p><b>Current Price:</b> {{ current }}</p>
+<p><b>Predicted Price:</b> {{ prediction }}</p>
+<p><b>Trend:</b> {{ trend }}</p>
+<p><b>Expected Change:</b> {{ change }} ({{ change_pct }}%)</p>
+
+<p><b>Confidence:</b> {{ confidence }}%</p>
+
+<h2 class="decision {% if decision=='INVEST' %}buy{% else %}sell{% endif %}">
+    {{ decision }}
+</h2>
+
+<p>{{ reason }}</p>
+
+</div>
+
+<br>
+
+<!-- GRAPH -->
+<div class="card">
+    <canvas id="chart"></canvas>
+</div>
+
+<script>
+const prices = {{ prices | tojson }};
+const predicted = {{ prediction | tojson }};
+
+const extendedPrices = [...prices, predicted];
+
+const labels = prices.map((_, i) => "T" + (i + 1));
+labels.push("T(next)");
+
+new Chart(document.getElementById('chart'), {
+    type: 'line',
+    data: {
+        labels: labels,
+        datasets: [
+          {
+    label: 'Prediction',
+    data: [...prices, predicted],
+    borderDash: [6,6],
+    borderColor: '#f97316',
+    borderWidth: 3,
+    tension: 0.4,
+
+    fill: false,
+
+    pointRadius: (ctx) =>
+        ctx.dataIndex === prices.length ? 10 : 0,
+
+    pointBackgroundColor: '#f97316',
+    pointBorderColor: '#fff',
+    pointBorderWidth: 2
+    },
+            {
+              label: 'Actual Prices',
+              data: prices,
+              borderWidth: 3,
+              borderColor: '#3b82f6',
+              tension: 0.4,
+              
+              fill: true,
+              backgroundColor: 'rgba(59,130,246,0.15)',
+              
+              pointRadius: 4,
+              pointHoverRadius: 6  
+            }
+        ]
+    },
+     options: {
+        animation: {
+            duration: 1500,
+            easing: 'easeOutQuart'
+        },
+        plugins: {
+            legend: {
+                labels: {
+                    color: '#e2e8f0'
+                }
+            }
+        }
+    }
+
+});
+</script>
+
+{% endif %}
+</div>
+
+</body>
+</html>
